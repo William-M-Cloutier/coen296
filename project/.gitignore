@@ -52,3 +52,7 @@ token.json
 
 # MCP
 mock_drive/
+
+#drive credentials
+drive_credentials.json
+drive_token.json

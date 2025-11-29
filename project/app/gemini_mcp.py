@@ -9,6 +9,16 @@ import google.generativeai as genai
 from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
 
+# Import Drive agent functions
+from drive_agent import (
+    get_drive_service,
+    list_files,
+    search_files,
+    download_file,
+    upload_file,
+    semantic_search
+)
+
 # Load environment variables
 load_dotenv()
 
@@ -114,28 +124,109 @@ def send_email_tool(to: str, subject: str, body: str):
         return "Email sent successfully!"
     except Exception as e: return f"Error: {e}"
 
+# --- Drive Helpers (Google Drive API) ---
+
+def list_drive_files_tool(max_results: int = 10, query: str = None):
+    """
+    List files from Google Drive.
+    
+    Args:
+        max_results: Maximum number of files to return (default 10).
+        query: Optional Drive query filter (e.g., "name contains 'report'").
+    """
+    try:
+        return list_files(max_results=max_results, query=query)
+    except Exception as e:
+        return f"Error listing Drive files: {e}"
+
+def search_drive_files_tool(search_term: str, use_semantic: bool = False):
+    """
+    Search for files in Google Drive by name or using native content search.
+    
+    Args:
+        search_term: Term to search for.
+        use_semantic: If True, use Drive's fullText search for content.
+    """
+    try:
+        return search_files(search_term=search_term, use_semantic=use_semantic)
+    except Exception as e:
+        return f"Error searching Drive files: {e}"
+
+def download_drive_file_tool(file_id: str, destination: str = None):
+    """
+    Download a file from Google Drive.
+    
+    Args:
+        file_id: ID of the file to download.
+        destination: Optional local path to save file.
+    """
+    try:
+        return download_file(file_id=file_id, destination=destination)
+    except Exception as e:
+        return f"Error downloading file: {e}"
+
+def upload_drive_file_tool(filepath: str, folder_id: str = None):
+    """
+    Upload a file to Google Drive.
+    
+    Args:
+        filepath: Local path to file to upload.
+        folder_id: Optional folder ID to upload to.
+    """
+    try:
+        return upload_file(filepath=filepath, folder_id=folder_id)
+    except Exception as e:
+        return f"Error uploading file: {e}"
+
+def semantic_search_tool(query: str, max_files: int = 10):
+    """
+    Search for files by content using Google Drive's native full-text search.
+    This searches inside Google Docs, PDFs, and text files.
+    
+    Args:
+        query: The text to search for inside files.
+        max_files: Maximum number of files to return (default 10).
+    """
+    try:
+        return semantic_search(query=query, max_files=max_files)
+    except Exception as e:
+        return f"Error in content search: {e}"
+
 # Map of tool names to functions for execution
 tools_map = {
+    # Gmail tools
     'list_emails': list_emails_tool,
     'read_email': read_email_tool,
-    'send_email': send_email_tool
+    'send_email': send_email_tool,
+    # Drive tools
+    'list_drive_files': list_drive_files_tool,
+    'search_drive_files': search_drive_files_tool,
+    'download_drive_file': download_drive_file_tool,
+    'upload_drive_file': upload_drive_file_tool,
+    'semantic_search': semantic_search_tool
 }
 
 @mcp.tool()
 def agent_action(request: str) -> str:
     """
-    Ask the AI Agent to perform an action (e.g., "Check my emails", "Send an email to X").
-    The Agent has access to Gmail tools and will use them to fulfill the request.
+    Ask the AI Agent to perform an action (e.g., "Check my emails", "List my Drive files", "Search for documents about X").
+    The Agent has access to Gmail and Google Drive tools and will use them to fulfill the request.
     
     Args:
         request: The user's natural language request.
     """
     if not API_KEY: return "Error: GEMINI_API_KEY not set."
 
-    # 1. Initialize Model with Tools
+    # 1. Initialize Model with Tools (Gmail + Drive)
     model = genai.GenerativeModel(
-        model_name='gemini-2.5-flash',
-        tools=[list_emails_tool, read_email_tool, send_email_tool]
+        model_name='gemini-1.5-flash',
+        tools=[
+            # Gmail tools
+            list_emails_tool, read_email_tool, send_email_tool,
+            # Drive tools
+            list_drive_files_tool, search_drive_files_tool, download_drive_file_tool,
+            upload_drive_file_tool, semantic_search_tool
+        ]
     )
     
     # 2. Start Chat Session
@@ -153,7 +244,7 @@ def ask_gemini(prompt: str) -> str:
     """Ask Gemini a general question (no tools)."""
     if not API_KEY: return "Error: GEMINI_API_KEY not set."
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(prompt)
         return response.text
     except Exception as e: return f"Error: {e}"
