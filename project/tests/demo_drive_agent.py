@@ -2,8 +2,9 @@
 Demo script for Google Drive Agent
 Tests file operations and RAG capabilities
 """
-import sys
-sys.path.insert(0, 'app')
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'app')))
+import drive_agent
 
 from drive_agent import (
     list_files,

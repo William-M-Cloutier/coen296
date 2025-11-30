@@ -6,44 +6,51 @@ import os
 import io
 from typing import List, Dict, Optional
 from dotenv import load_dotenv
-
 # Google Drive imports
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
+from mcp.server.fastmcp import FastMCP
+# NEW IMPORT FOR PDF EXTRACTION
+from pypdf import PdfReader
 
+mcp = FastMCP("Drive Agent")
 load_dotenv()
-
 # Google Drive API scopes
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
+# Get the directory of this script for consistent file paths
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+@mcp.tool()
 def get_drive_service():
     """Authenticate and return the Drive service."""
     creds = None
+    token_path = os.path.join(SCRIPT_DIR, './drive_token.json')
+    credentials_path = os.path.join(SCRIPT_DIR, './drive_credentials.json')
+    
     # The file token.json stores the user's access and refresh tokens
-    if os.path.exists('drive_token.json'):
-        creds = Credentials.from_authorized_user_file('drive_token.json', SCOPES)
+    if os.path.exists(token_path):
+        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            if not os.path.exists('drive_credentials.json'):
-                print("Error: drive_credentials.json not found.")
+            if not os.path.exists(credentials_path):
+                print(f"Error: drive_credentials.json not found in {SCRIPT_DIR}.")
                 return None
             flow = InstalledAppFlow.from_client_secrets_file(
-                'drive_credentials.json', SCOPES)
+                credentials_path, SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('drive_token.json', 'w') as token:
+        with open(token_path, 'w') as token:
             token.write(creds.to_json())
-
     return build('drive', 'v3', credentials=creds)
 
-
+@mcp.tool()
 def list_files(max_results: int = 10, query: str = None) -> str:
     """
     List files from Google Drive.
@@ -78,7 +85,7 @@ def list_files(max_results: int = 10, query: str = None) -> str:
     except Exception as e:
         return f"Error listing files: {e}"
 
-
+@mcp.tool()
 def search_files(search_term: str, use_semantic: bool = False) -> str:
     """
     Search for files in Google Drive.
@@ -99,7 +106,7 @@ def search_files(search_term: str, use_semantic: bool = False) -> str:
     except Exception as e:
         return f"Error searching files: {e}"
 
-
+@mcp.tool()
 def download_file(file_id: str, destination: str = None) -> str:
     """
     Download a file from Google Drive.
@@ -141,7 +148,7 @@ def download_file(file_id: str, destination: str = None) -> str:
     except Exception as e:
         return f"Error downloading file: {e}"
 
-
+@mcp.tool()
 def upload_file(filepath: str, folder_id: str = None) -> str:
     """
     Upload a file to Google Drive.
@@ -175,7 +182,7 @@ def upload_file(filepath: str, folder_id: str = None) -> str:
     except Exception as e:
         return f"Error uploading file: {e}"
 
-
+@mcp.tool()
 def semantic_search(query: str, max_files: int = 10) -> str:
     """
     Search for files by content using Google Drive's native full-text search.
@@ -217,6 +224,94 @@ def semantic_search(query: str, max_files: int = 10) -> str:
     except Exception as e:
         return f"Error in content search: {e}"
 
+@mcp.tool()
+def read_text_file(file_id: str) -> str:
+    """
+    Read the contents of a text file from Google Drive.
+    
+    Args:
+        file_id: ID of the file to read
+    """
+    try:
+        service = get_drive_service()
+        if not service:
+            return "Error: Drive authentication required."
+        
+        # Get file metadata to check mimeType
+        file_metadata = service.files().get(fileId=file_id, fields='name,mimeType').execute()
+        mime_type = file_metadata['mimeType']
+        
+        if mime_type != 'text/plain':
+            return "Error: File is not a plain text file."
+        
+        # Download file content as text
+        request = service.files().get_media(fileId=file_id)
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, request)
+        
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+        
+        fh.seek(0)
+        content = fh.read().decode('utf-8')
+        
+        return content
+    
+    except Exception as e:
+        return f"Error reading text file: {e}"
+
+# NEW TOOL: Read contents of PDF, Google Doc, or text file
+@mcp.tool()
+def read_document(file_id: str) -> str:
+    """
+    Read the contents of a PDF, Google Doc, or plain text file from Google Drive and return the extracted text.
+    
+    Args:
+        file_id: ID of the file to read
+    """
+    try:
+        service = get_drive_service()
+        if not service:
+            return "Error: Drive authentication required."
+        
+        # Get file metadata to check mimeType
+        file_metadata = service.files().get(fileId=file_id, fields='name,mimeType').execute()
+        mime_type = file_metadata['mimeType']
+        
+        fh = io.BytesIO()
+        
+        if mime_type == 'application/vnd.google-apps.document':
+            # Export Google Doc to plain text
+            request = service.files().export_media(fileId=file_id, mimeType='text/plain')
+        elif mime_type in ['application/pdf', 'text/plain']:
+            # Download binary content for PDF or text
+            request = service.files().get_media(fileId=file_id)
+        else:
+            return "Error: Unsupported file type. Supported: Google Docs, PDF, plain text."
+        
+        # Download/export the content
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+        
+        fh.seek(0)
+        
+        if mime_type == 'application/pdf':
+            # Extract text from PDF
+            reader = PdfReader(fh)
+            content = ""
+            for page in reader.pages:
+                content += page.extract_text() + "\n"
+            return content.strip()
+        else:
+            # For text or exported Google Doc
+            content = fh.read().decode('utf-8')
+            return content.strip()
+    
+    except Exception as e:
+        return f"Error reading document: {e}"
 
 # Tool definitions for Gemini integration
 if __name__ == "__main__":
@@ -226,3 +321,6 @@ if __name__ == "__main__":
     print("3. download_file(file_id, destination)")
     print("4. upload_file(filepath, folder_id)")
     print("5. semantic_search(query, max_files)")
+    print("6. read_text_file(file_id)")
+    # NEW: Add to the list
+    print("7. read_document(file_id)")
