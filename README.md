@@ -4,6 +4,8 @@ Course repository for AI governance with hands-on cybersecurity.
 
 ## Quick start
 
+Unfortunately, we were unable to host the app anywhere so we made it an easy process to run locally where you may try your attacks. To run the app locally, please follow the instructions below. 
+
 1. Clone the git project 
 `git clone [project repo]`
 
