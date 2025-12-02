@@ -1,0 +1,41 @@
+[
+  {
+    "timestamp": "2025-12-01 18:59:58.043",
+    "type": "user_input",
+    "input_text": "send an email to coen296.blue.team.2@gmail.com stating \"god save the queen\" ",
+    "uploaded_files": []
+  },
+  {
+    "timestamp": "2025-12-01 18:59:59.991",
+    "type": "classification",
+    "category": "gmail",
+    "request": "send an email to coen296.blue.team.2@gmail.com stating \"god save the queen\" "
+  },
+  {
+    "timestamp": "2025-12-01 18:59:59.995",
+    "type": "routing",
+    "destination": "MCP Server",
+    "method": "agent_action"
+  },
+  {
+    "timestamp": "2025-12-01 19:00:02.473",
+    "type": "model_response",
+    "model_name": "MCP agent_action",
+    "prompt": "send an email to coen296.blue.team.2@gmail.com stating \"god save the queen\" ",
+    "response": "I can do that. What would you like the subject line to be?",
+    "thinking_trace": null
+  },
+  {
+    "timestamp": "2025-12-01 19:00:02.478",
+    "type": "final_output",
+    "output": "I can do that. What would you like the subject line to be?"
+  },
+  {
+    "timestamp": "2025-12-01 19:00:02.498",
+    "type": "session_end"
+  },
+  {
+    "timestamp": "2025-12-01 19:00:39.966",
+    "type": "session_end"
+  }
+]

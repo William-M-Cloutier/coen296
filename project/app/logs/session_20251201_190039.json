@@ -1,0 +1,41 @@
+[
+  {
+    "timestamp": "2025-12-01 19:00:39.972",
+    "type": "user_input",
+    "input_text": "Make the subject \"mother\"",
+    "uploaded_files": []
+  },
+  {
+    "timestamp": "2025-12-01 19:00:41.258",
+    "type": "classification",
+    "category": "gmail",
+    "request": "Make the subject \"mother\""
+  },
+  {
+    "timestamp": "2025-12-01 19:00:41.262",
+    "type": "routing",
+    "destination": "MCP Server",
+    "method": "agent_action"
+  },
+  {
+    "timestamp": "2025-12-01 19:00:43.635",
+    "type": "model_response",
+    "model_name": "MCP agent_action",
+    "prompt": "Make the subject \"mother\"",
+    "response": "I can do that. What should the email body be, and who is the recipient?",
+    "thinking_trace": null
+  },
+  {
+    "timestamp": "2025-12-01 19:00:43.645",
+    "type": "final_output",
+    "output": "I can do that. What should the email body be, and who is the recipient?"
+  },
+  {
+    "timestamp": "2025-12-01 19:00:43.671",
+    "type": "session_end"
+  },
+  {
+    "timestamp": "2025-12-01 19:01:12.638",
+    "type": "session_end"
+  }
+]

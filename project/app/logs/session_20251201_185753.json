@@ -1,0 +1,41 @@
+[
+  {
+    "timestamp": "2025-12-01 18:57:53.555",
+    "type": "user_input",
+    "input_text": "list my 5 most recent emails",
+    "uploaded_files": []
+  },
+  {
+    "timestamp": "2025-12-01 18:57:54.860",
+    "type": "classification",
+    "category": "gmail",
+    "request": "list my 5 most recent emails"
+  },
+  {
+    "timestamp": "2025-12-01 18:57:54.863",
+    "type": "routing",
+    "destination": "MCP Server",
+    "method": "agent_action"
+  },
+  {
+    "timestamp": "2025-12-01 18:57:56.938",
+    "type": "model_response",
+    "model_name": "MCP agent_action",
+    "prompt": "list my 5 most recent emails",
+    "response": "No results found or response blocked. Finish reason: 1",
+    "thinking_trace": null
+  },
+  {
+    "timestamp": "2025-12-01 18:57:56.944",
+    "type": "final_output",
+    "output": "No results found or response blocked. Finish reason: 1"
+  },
+  {
+    "timestamp": "2025-12-01 18:57:56.971",
+    "type": "session_end"
+  },
+  {
+    "timestamp": "2025-12-01 18:58:57.165",
+    "type": "session_end"
+  }
+]

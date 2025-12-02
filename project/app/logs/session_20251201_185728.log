@@ -1,0 +1,43 @@
+================================================================================
+SESSION LOG - 20251201_185728
+================================================================================
+
+
+[2025-12-01 18:57:34.379] MODEL RESPONSE
+Model: gemini-2.5-flash (agent_action)
+Prompt: list my recent emails
+
+Response:
+I have listed your 10 most recent emails.
+
+
+[2025-12-01 18:57:56.914] ERROR
+Type: agent_action_finish_reason
+Message: No results found or response blocked. Finish reason: 1
+Context: agent_action
+
+[2025-12-01 18:58:59.895] ERROR
+Type: agent_action_finish_reason
+Message: No results found or response blocked. Finish reason: 1
+Context: agent_action
+
+[2025-12-01 19:00:02.450] MODEL RESPONSE
+Model: gemini-2.5-flash (agent_action)
+Prompt: send an email to coen296.blue.team.2@gmail.com stating "god save the queen" 
+
+Response:
+I can do that. What would you like the subject line to be?
+
+[2025-12-01 19:00:43.613] MODEL RESPONSE
+Model: gemini-2.5-flash (agent_action)
+Prompt: Make the subject "mother"
+
+Response:
+I can do that. What should the email body be, and who is the recipient?
+
+[2025-12-01 19:01:23.765] MODEL RESPONSE
+Model: gemini-2.5-flash (agent_action)
+Prompt: Make the subject "mother", email body "killed a man", recipient 'coen296.blue.team.2@gmail.com'
+
+Response:
+Email sent successfully!

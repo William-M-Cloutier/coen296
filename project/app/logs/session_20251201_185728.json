@@ -1,0 +1,48 @@
+[
+  {
+    "timestamp": "2025-12-01 18:57:34.379",
+    "type": "model_response",
+    "model_name": "gemini-2.5-flash (agent_action)",
+    "prompt": "list my recent emails",
+    "response": "I have listed your 10 most recent emails.\n",
+    "thinking_trace": null
+  },
+  {
+    "timestamp": "2025-12-01 18:57:56.914",
+    "type": "error",
+    "error_type": "agent_action_finish_reason",
+    "error_message": "No results found or response blocked. Finish reason: 1",
+    "context": "agent_action"
+  },
+  {
+    "timestamp": "2025-12-01 18:58:59.895",
+    "type": "error",
+    "error_type": "agent_action_finish_reason",
+    "error_message": "No results found or response blocked. Finish reason: 1",
+    "context": "agent_action"
+  },
+  {
+    "timestamp": "2025-12-01 19:00:02.450",
+    "type": "model_response",
+    "model_name": "gemini-2.5-flash (agent_action)",
+    "prompt": "send an email to coen296.blue.team.2@gmail.com stating \"god save the queen\" ",
+    "response": "I can do that. What would you like the subject line to be?",
+    "thinking_trace": null
+  },
+  {
+    "timestamp": "2025-12-01 19:00:43.613",
+    "type": "model_response",
+    "model_name": "gemini-2.5-flash (agent_action)",
+    "prompt": "Make the subject \"mother\"",
+    "response": "I can do that. What should the email body be, and who is the recipient?",
+    "thinking_trace": null
+  },
+  {
+    "timestamp": "2025-12-01 19:01:23.765",
+    "type": "model_response",
+    "model_name": "gemini-2.5-flash (agent_action)",
+    "prompt": "Make the subject \"mother\", email body \"killed a man\", recipient 'coen296.blue.team.2@gmail.com'",
+    "response": "Email sent successfully!",
+    "thinking_trace": null
+  }
+]

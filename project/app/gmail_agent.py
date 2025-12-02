@@ -9,7 +9,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from mcp.server.fastmcp import FastMCP
-
+from logging_utils import get_logger
 # Initialize FastMCP server
 mcp = FastMCP("Gmail Agent")
 
@@ -52,6 +52,11 @@ def list_emails(max_results: int = 10, query: str = None) -> str:
         max_results: Maximum number of emails to return (default 10).
         query: Gmail search query (e.g., 'is:unread', 'from:boss@example.com').
     """
+    logger = get_logger()
+    logger.log_tool_call(
+        tool_name="list_emails",
+        parameters={"max_results": max_results, "query": query}
+    )
     try:
         service = get_gmail_service()
         results = service.users().messages().list(userId='me', maxResults=max_results, q=query).execute()
@@ -68,11 +73,26 @@ def list_emails(max_results: int = 10, query: str = None) -> str:
             sender = next((h['value'] for h in headers if h['name'] == 'From'), '(unknown)')
             output.append(f"ID: {message['id']} | From: {sender} | Subject: {subject}")
         
+        logger.log_tool_call(
+            tool_name="list_emails",
+            parameters={"max_results": max_results, "query": query},
+            result="\n".join(output)
+        )
         return "\n".join(output)
 
     except HttpError as error:
+        logger.log_error(
+            error_type="gmail_list_error",
+            error_message=str(error),
+            context="list_emails"
+        )
         return f"An error occurred: {error}"
     except Exception as e:
+        logger.log_error(
+            error_type="gmail_list_error",
+            error_message=str(e),
+            context="list_emails"
+        )
         return f"Error: {str(e)}"
 
 @mcp.tool()
@@ -83,6 +103,11 @@ def read_email(message_id: str) -> str:
     Args:
         message_id: The ID of the email to read (from list_emails).
     """
+    logger = get_logger()
+    logger.log_tool_call(
+        tool_name="read_email",
+        parameters={"message_id": message_id}
+    )
     try:
         service = get_gmail_service()
         msg = service.users().messages().get(userId='me', id=message_id, format='full').execute()
@@ -108,8 +133,18 @@ def read_email(message_id: str) -> str:
         return f"From: {sender}\nSubject: {subject}\n\nBody:\n{body}"
 
     except HttpError as error:
+        logger.log_error(
+            error_type="gmail_read_error",
+            error_message=str(error),
+            context="read_email"
+        )
         return f"An error occurred: {error}"
     except Exception as e:
+        logger.log_error(
+            error_type="gmail_read_error",
+            error_message=str(e),
+            context="read_email"
+        )
         return f"Error: {str(e)}"
 
 @mcp.tool()
@@ -122,6 +157,11 @@ def send_email(to: str, subject: str, body: str) -> str:
         subject: Email subject.
         body: Email body content.
     """
+    logger = get_logger()
+    logger.log_tool_call(
+        tool_name="send_email",
+        parameters={"to": to, "subject": subject, "body_preview": body[:100]  + "..."}
+    )
     try:
         service = get_gmail_service()
         message = EmailMessage()
@@ -134,11 +174,32 @@ def send_email(to: str, subject: str, body: str) -> str:
         create_message = {'raw': encoded_message}
         
         send_message = (service.users().messages().send(userId="me", body=create_message).execute())
-        return f"Email sent successfully! Message Id: {send_message['id']}"
-
+        result = f"Email sent successfully! Message Id: {send_message['id']}"
+        logger.log_tool_call(
+            tool_name="send_email",
+            parameters={"to": to,"subject": subject},
+            result=result
+        )
+        return result
+    except Exception as e:
+        logger.log_error(
+            error_type="gmail_send_error",
+            error_message=str(e),
+            context="send_email"
+        )
     except HttpError as error:
+        logger.log_error(
+            error_type="gmail_send_error",
+            error_message=str(error),
+            context="send_email"
+        )
         return f"An error occurred: {error}"
     except Exception as e:
+        logger.log_error(
+            error_type="gmail_send_error",
+            error_message=str(e),
+            context="send_email"
+        )
         return f"Error: {str(e)}"
 
 @mcp.tool()
@@ -149,14 +210,41 @@ def create_label(label_name: str) -> str:
     Args:
         label_name: The name of the new label.
     """
+    logger = get_logger()
+    logger.log_tool_call(
+        tool_name="create_label",
+        parameters={"label_name": label_name}
+    )
     try:
         service = get_gmail_service()
         label = {'name': label_name}
         created_label = service.users().labels().create(userId='me', body=label).execute()
-        return f"Label created: {created_label['id']} ({created_label['name']})"
+        result = f"Label created: {created_label['id']} ({created_label['name']})"
+        logger.log_tool_call(
+            tool_name="create_label",
+            parameters={"label_name": label_name},
+            result=result
+        )
+        return result
+    except Exception as e:
+        logger.log_error(
+            error_type="gmail_send_error",
+            error_message=str(e),
+            context="create_label"
+        )
     except HttpError as error:
+        logger.log_error(
+            error_type="gmail_send_error",
+            error_message=str(error),
+            context="create_label"
+        )
         return f"An error occurred: {error}"
     except Exception as e:
+        logger.log_error(
+            error_type="gmail_send_error",
+            error_message=str(e),
+            context="create_label"
+        )
         return f"Error: {str(e)}"
 
 @mcp.tool()
@@ -168,6 +256,11 @@ def apply_label(message_id: str, label_id: str) -> str:
         message_id: The ID of the email.
         label_id: The ID of the label to apply (or the name if it's a system label like 'INBOX').
     """
+    logger = get_logger()
+    logger.log_tool_call(
+        tool_name="apply_label",
+        parameters={"message_id": message_id, "label_id": label_id}
+    )
     try:
         service = get_gmail_service()
         # First, we might need to look up the label ID if a name was passed, 
@@ -180,10 +273,26 @@ def apply_label(message_id: str, label_id: str) -> str:
 
         body = {'addLabelIds': [label_id]}
         service.users().messages().modify(userId='me', id=message_id, body=body).execute()
-        return f"Label '{label_id}' applied to message {message_id}"
+        result = f"Label '{label_id}' applied to message {message_id}"
+        logger.log_tool_call(
+            tool_name="apply_label",
+            parameters={"message_id": message_id, "label_id": label_id},
+            result=result
+        )
+        return result
     except HttpError as error:
+        logger.log_error(
+            error_type="gmail_send_error",
+            error_message=str(error),
+            context="apply_label"
+        )
         return f"An error occurred: {error}"
     except Exception as e:
+        logger.log_error(
+            error_type="gmail_send_error",
+            error_message=str(e),
+            context="apply_label"
+        )
         return f"Error: {str(e)}"
 
 if __name__ == "__main__":

@@ -8,6 +8,8 @@ import google.generativeai as genai
 import fitz  # PyMuPDF for PDF text extraction
 from datetime import datetime
 from mcp.server.fastmcp import FastMCP
+from logging_utils import get_logger
+
 
 mcp = FastMCP("Expense Agent")
 load_dotenv()
@@ -49,6 +51,11 @@ def validate_reimbursement(receipt_path: str) -> str:
     Args:
         receipt_path: Local path to the receipt PDF.
     """
+    logger = get_logger()
+    logger.log_tool_call(
+        tool_name="validate_reimbursement",
+        parameters={"receipt_path": receipt_path}
+    )
     receipt_text = read_pdf_text(receipt_path)
     if receipt_text.startswith("Error"):
         return "DENIED"  # No receipt, no reimbursement
@@ -78,7 +85,12 @@ def validate_reimbursement(receipt_path: str) -> str:
             days_since_receipt = (analysis_date - receipt_date).days
     except Exception:
         pass  # If parsing fails, treat as UNKNOWN
-
+    logger.log_model_response(
+        model_name=f"{AI_MODEL} (expense_date_extraction)",
+        prompt=date_prompt,
+        response=receipt_date_str,
+        thinking_trace="Extracting receipt date from PDF text"
+    )
     # Step 3: Build main prompt
     current_date = analysis_date.strftime("%Y-%m-%d")
     main_prompt = f"""
@@ -103,12 +115,31 @@ def validate_reimbursement(receipt_path: str) -> str:
     """
 
     # Call Gemini
+    # Call Gemini
     response = model.generate_content(main_prompt)
     result = response.text.strip().upper()
     
+    logger. log_model_response(
+        model_name=f"{AI_MODEL} (expense_validation)",
+        prompt=main_prompt,
+        response=result,
+        thinking_trace=f"Validating reimbursement against policy. Receipt date: {receipt_date_str if receipt_date else 'UNKNOWN'}, Days since: {days_since_receipt if days_since_receipt else 'N/A'}"
+    )
+    
     # Ensure output is strictly APPROVED or DENIED
     if result not in ["APPROVED", "DENIED"]:
+        logger.log_error(
+            error_type="expense_validation_unclear",
+            error_message=f"Model returned unclear result: {result}",
+            context="validate_reimbursement"
+        )
         return "DENIED"  # Default to denied if unclear
+    
+    logger.log_tool_call(
+        tool_name="validate_reimbursement",
+        parameters={"receipt_path": receipt_path},
+        result=result
+    )
     
     return result
 

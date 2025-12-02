@@ -15,6 +15,8 @@ from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 from mcp.server.fastmcp import FastMCP
 # NEW IMPORT FOR PDF EXTRACTION
 from pypdf import PdfReader
+from logging_utils import get_logger
+
 
 mcp = FastMCP("Drive Agent")
 load_dotenv()
@@ -59,6 +61,11 @@ def list_files(max_results: int = 10, query: str = None) -> str:
         max_results: Maximum number of files to return
         query: Optional query string for filtering
     """
+    logger = get_logger()
+    logger.log_tool_call(
+        tool_name="list_files",
+        parameters={"max_results": max_results, "query": query}
+    )
     try:
         service = get_drive_service()
         if not service:
@@ -80,9 +87,19 @@ def list_files(max_results: int = 10, query: str = None) -> str:
             size = file.get('size', 'N/A')
             output.append(f"ID: {file['id']} | Name: {file['name']} | Type: {file['mimeType']} | Size: {size} bytes")
             
+        logger.log_tool_call(
+            tool_name="list_files",
+            parameters={"max_results": max_results, "query": query},
+            result=f"Found {len(files)} files"
+        )
         return "\n".join(output)
     
     except Exception as e:
+        logger.log_error(
+            error_type="drive_list_files_error",
+            error_message=str(e),
+            context="list_files"
+        )
         return f"Error listing files: {e}"
 
 @mcp.tool()
@@ -94,6 +111,11 @@ def search_files(search_term: str, use_semantic: bool = False) -> str:
         search_term: Term to search for
         use_semantic: If True, use native content search (fullText)
     """
+    logger = get_logger()
+    logger.log_tool_call(
+        tool_name="search_files",
+        parameters={"search_term": search_term, "use_semantic": use_semantic}
+    )
     try:
         if use_semantic:
             # Use native content search
@@ -104,6 +126,11 @@ def search_files(search_term: str, use_semantic: bool = False) -> str:
             return list_files(max_results=10, query=query)
     
     except Exception as e:
+        logger.log_error(
+            error_type="drive_search_error",
+            error_message=str(e),
+            context="search_files"
+        )
         return f"Error searching files: {e}"
 
 @mcp.tool()
@@ -115,6 +142,11 @@ def download_file(file_id: str, destination: str = None) -> str:
         file_id: ID of the file to download
         destination: Optional local path to save file
     """
+    logger = get_logger()
+    logger.log_tool_call(
+        tool_name="download_file",
+        parameters={"file_id": file_id, "destination": destination}
+    )
     try:
         service = get_drive_service()
         if not service:
@@ -143,9 +175,19 @@ def download_file(file_id: str, destination: str = None) -> str:
         with open(save_path, 'wb') as f:
             f.write(fh.getbuffer())
             
+        logger.log_tool_call(
+            tool_name="download_file",
+            parameters={"file_id": file_id, "destination": destination},
+            result=f"File downloaded successfully to: {save_path}"
+        )
         return f"File downloaded successfully to: {save_path}"
     
     except Exception as e:
+        logger.log_error(
+            error_type="drive_download_error",
+            error_message=str(e),
+            context="download_file"
+        )
         return f"Error downloading file: {e}"
 
 @mcp.tool()
@@ -157,6 +199,11 @@ def upload_file(filepath: str, folder_id: str = None) -> str:
         filepath: Local path to file to upload
         folder_id: Optional folder ID to upload to
     """
+    logger = get_logger()
+    logger.log_tool_call(
+        tool_name="upload_file",
+        parameters={"filepath": filepath, "folder_id": folder_id}
+    )
     try:
         if not os.path.exists(filepath):
             return f"Error: File not found at {filepath}"
@@ -177,9 +224,19 @@ def upload_file(filepath: str, folder_id: str = None) -> str:
             fields='id, name'
         ).execute()
         
+        logger.log_tool_call(
+            tool_name="upload_file",
+            parameters={"filepath": filepath, "folder_id": folder_id},
+            result=f"File uploaded successfully! ID: {file.get('id')}, Name: {file.get('name')}"
+        )
         return f"File uploaded successfully! ID: {file.get('id')}, Name: {file.get('name')}"
     
     except Exception as e:
+        logger.log_error(
+            error_type="drive_upload_error",
+            error_message=str(e),
+            context="upload_file"
+        )
         return f"Error uploading file: {e}"
 
 @mcp.tool()
@@ -192,6 +249,11 @@ def semantic_search(query: str, max_files: int = 10) -> str:
         query: The text to search for inside files
         max_files: Maximum number of results
     """
+    logger = get_logger()
+    logger.log_tool_call(
+        tool_name="semantic_search",
+        parameters={"query": query, "max_files": max_files}
+    )
     try:
         service = get_drive_service()
         if not service:
@@ -219,9 +281,18 @@ def semantic_search(query: str, max_files: int = 10) -> str:
             output.append(f"   Type: {file['mimeType']}")
             output.append(f"   Link: {file.get('webViewLink', 'N/A')}\n")
             
+        logger.log_tool_call(
+            tool_name="semantic_search",
+            parameters={"query": query},
+            result=f"Found {len(files)} files"
+        )
         return "\n".join(output)
-    
     except Exception as e:
+        logger.log_error(
+            error_type="drive_semantic_search_error",
+            error_message=str(e),
+            context="semantic_search"
+        )
         return f"Error in content search: {e}"
 
 @mcp.tool()
@@ -270,6 +341,11 @@ def read_document(file_id: str) -> str:
     Args:
         file_id: ID of the file to read
     """
+    logger = get_logger()
+    logger.log_tool_call(
+        tool_name="read_document",
+        parameters={"file_id": file_id}
+    )
     try:
         service = get_drive_service()
         if not service:
@@ -311,6 +387,11 @@ def read_document(file_id: str) -> str:
             return content.strip()
     
     except Exception as e:
+        logger.log_error(
+            error_type="drive_read_document_error",
+            error_message=str(e),
+            context="read_document"
+        )
         return f"Error reading document: {e}"
 
 # Tool definitions for Gemini integration

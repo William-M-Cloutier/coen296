@@ -1,0 +1,41 @@
+[
+  {
+    "timestamp": "2025-12-01 18:57:26.019",
+    "type": "user_input",
+    "input_text": "list my recent emails",
+    "uploaded_files": []
+  },
+  {
+    "timestamp": "2025-12-01 18:57:26.913",
+    "type": "classification",
+    "category": "gmail",
+    "request": "list my recent emails"
+  },
+  {
+    "timestamp": "2025-12-01 18:57:26.917",
+    "type": "routing",
+    "destination": "MCP Server",
+    "method": "agent_action"
+  },
+  {
+    "timestamp": "2025-12-01 18:57:34.674",
+    "type": "model_response",
+    "model_name": "MCP agent_action",
+    "prompt": "list my recent emails",
+    "response": "I have listed your 10 most recent emails.\n",
+    "thinking_trace": null
+  },
+  {
+    "timestamp": "2025-12-01 18:57:34.679",
+    "type": "final_output",
+    "output": "I have listed your 10 most recent emails.\n"
+  },
+  {
+    "timestamp": "2025-12-01 18:57:34.705",
+    "type": "session_end"
+  },
+  {
+    "timestamp": "2025-12-01 18:57:53.549",
+    "type": "session_end"
+  }
+]
