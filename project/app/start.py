@@ -8,45 +8,74 @@ import time
 import os
 
 def start_services():
-    print("Starting MCP server...")
-    # Start MCP server as subprocess
+    print("="*60)
+    print("Starting Orchestration Agent Multi-Service Deployment")
+    print("="*60)
+    
+    print("\n[1/2] Starting MCP server on port 8000...")
+    # Start MCP server as subprocess - let it output to console
     mcp_process = subprocess.Popen(
         [sys.executable, "gemini_mcp.py"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        # Don't capture output - let it print to console for debugging
+        stdout=None,
+        stderr=None
     )
     
     # Wait for MCP server to initialize
-    print("Waiting for MCP server to initialize...")
+    print("[1/2] Waiting 5 seconds for MCP server to initialize...")
     time.sleep(5)
     
     # Check if MCP server is still running
     if mcp_process.poll() is not None:
+        print("\n" + "="*60)
         print("ERROR: MCP server failed to start!")
-        stdout, stderr = mcp_process.communicate()
-        print("STDOUT:", stdout.decode())
-        print("STDERR:", stderr.decode())
+        print("="*60)
+        print("Exit code:", mcp_process.returncode)
+        print("\nPossible causes:")
+        print("- Missing dependencies (check requirements.txt installed)")
+        print("- Port 8000 already in use")
+        print("- Missing environment variables (GEMINI_API_KEY)")
+        print("\nCheck logs above for more details.")
         sys.exit(1)
     
-    print("MCP server started successfully (PID: {})".format(mcp_process.pid))
-    print("Starting UI app...")
+    print("[1/2] ✓ MCP server started successfully (PID: {})".format(mcp_process.pid))
+    print("\n[2/2] Starting UI app...")
     
     # Start UI app (this blocks)
     try:
         ui_process = subprocess.Popen(
             [sys.executable, "ui_app.py"],
-            stdout=sys.stdout,
-            stderr=sys.stderr
+            stdout=None,
+            stderr=None
         )
+        print("[2/2] ✓ UI app started (PID: {})".format(ui_process.pid))
+        print("\n" + "="*60)
+        print("Both services running!")
+        print("MCP Server: http://localhost:8000")
+        print("UI App: http://0.0.0.0:{}".format(os.environ.get('PORT', 8080)))
+        print("="*60)
+        print("\nPress Ctrl+C to stop both services.")
+        
+        # Wait for UI app to finish
         ui_process.wait()
+        
     except KeyboardInterrupt:
-        print("\nShutting down...")
-    finally:
-        # Cleanup: terminate MCP server
-        print("Terminating MCP server...")
-        mcp_process.terminate()
-        mcp_process.wait()
-        print("All services stopped.")
+        print("\n\nReceived shutdown signal...")
+    except Exception as e:
+        print("\n\nError running UI app:", e)
+    # finally:
+    #     # Cleanup: terminate MCP server
+    #     print("\nShutting down services...")
+    #     print("- Terminating MCP server...")
+    #     mcp_process.terminate()
+    #     try:
+    #         mcp_process.wait(timeout=5)
+    #         print("- MCP server stopped")
+    #     except:
+    #         print("- Force killing MCP server...")
+    #         mcp_process.kill()
+    #         mcp_process.wait()
+    #     print("\n✓ All services stopped.\n")
 
 if __name__ == "__main__":
     start_services()

@@ -15,4 +15,4 @@ echo "Starting UI app..."
 python ui_app.py
 
 # If UI app exits, kill the MCP server
-kill $MCP_PID
+# kill $MCP_PID
