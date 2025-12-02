@@ -15,9 +15,10 @@ This application is configured to deploy on Render.com
 
 3. **Create New Web Service** and configure:
    - **Build Command**: `pip install -r project/app/requirements.txt`
-   - **Start Command**: `cd project/app && python ui_app.py`
+   - **Start Command**: `cd project/app && python start.py`
    - **Environment Variables**:
      - `GEMINI_API_KEY` - Your Gemini API key
+     - `MCP_PORT` - Set to `8000`
      - `GMAIL_USER` - Your Gmail address (optional)
      - `GMAIL_PASSWORD` - Your Gmail app password (optional)
 
