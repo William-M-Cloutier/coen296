@@ -173,16 +173,16 @@ def validate_reimbursement_tool(receipt_path: str):
         return f"Error validating reimbursement: {e}"
 
 tools_map = {
-    'list_emails': list_emails_tool,
-    'read_email': read_email_tool,
-    'send_email': send_email_tool,
-    'list_drive_files': list_drive_files_tool,
-    'search_drive_files': search_drive_files_tool,
-    'download_drive_file': download_drive_file_tool,
-    'upload_drive_file': upload_drive_file_tool,
-    'semantic_search': semantic_search_tool,
-    'validate_reimbursement': validate_reimbursement_tool,
-    'read_drive_document': read_drive_document_tool
+    'list_emails_tool': list_emails_tool,
+    'read_email_tool': read_email_tool,
+    'send_email_tool': send_email_tool,
+    'list_drive_files_tool': list_drive_files_tool,
+    'search_drive_files_tool': search_drive_files_tool,
+    'download_drive_file_tool': download_drive_file_tool,
+    'upload_drive_file_tool': upload_drive_file_tool,
+    'semantic_search_tool': semantic_search_tool,
+    'validate_reimbursement_tool': validate_reimbursement_tool,
+    'read_drive_document_tool': read_drive_document_tool
 }
 
 @mcp.tool()
