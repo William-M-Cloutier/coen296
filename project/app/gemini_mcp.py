@@ -534,4 +534,5 @@ if __name__ == "__main__":
     # UI will run on the PORT environment variable (e.g., 8080)
     mcp_port = int(os.environ.get('MCP_PORT', 8000))
     # Bind to 0.0.0.0 to ensure it's accessible inside the container
-    mcp.run(transport="sse", port=mcp_port, host="0.0.0.0")
+    # mcp.run(transport="sse", port=mcp_port, host="0.0.0.0")
+    mcp.run(transport="sse")
