@@ -323,12 +323,14 @@ def ask_gemini(prompt: str) -> str:
     if not API_KEY: return "Error: GEMINI_API_KEY not set."
     try:
         model = genai.GenerativeModel('gemini-2.5-flash')
-import os
+    except Exception as e:
+        return f"Error initializing Gemini model: {e}"
     
     try:
-        return list_files(max_results=max_results, query=query)
+        response = model.generate_content(prompt)
+        return response.text
     except Exception as e:
-        return f"Error listing Drive files: {e}"
+        return f"Error generating content: {e}"
 
 def search_drive_files_tool(search_term: str, use_semantic: bool = False):
     """
