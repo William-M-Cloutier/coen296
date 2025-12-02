@@ -242,20 +242,29 @@ def agent_action(request: str) -> str:
                     }
                 )
             else:
-                if response.text:
-                    result_text = response.text
-                    logger.log_model_response(
-                        model_name="gemini-2.5-flash (agent_action)",
-                        prompt=request,
-                        response=result_text
-                    )
-                    return result_text
+                # Try to extract text safely
+                try:
+                    if response.text:
+                        result_text = response.text
+                        logger.log_model_response(
+                            model_name="gemini-2.5-flash (agent_action)",
+                            prompt=request,
+                            response=result_text
+                        )
+                        return result_text
+                except Exception:
+                    # No valid text in response
+                    pass
                 break
                 
-        if response.text:
-            return response.text
-        else:
-            return "No final response generated after tool calls."
+        # Try to extract final text safely
+        try:
+            if response.text:
+                return response.text
+        except Exception:
+            pass
+            
+        return "No final response generated after tool calls."
 
     except Exception as e:
         error_msg = f"Agent Error: {str(e)}"
