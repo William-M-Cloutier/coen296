@@ -12,3 +12,5 @@ pypdf2
 pypdf
 sentence-transformers
 fitz
+nicegui
+fastmcp
