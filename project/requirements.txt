@@ -12,3 +12,4 @@ pypdf2
 pypdf
 sentence-transformers
 fitz
+gi
