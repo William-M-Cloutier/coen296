@@ -1,14 +1,25 @@
+# Web Framework and UI
 fastapi
 uvicorn[standard]
 pydantic
+nicegui
+
+# MCP (Model Context Protocol)
 mcp
+fastmcp
+
+# Google AI and APIs
 google-generativeai
-python-dotenv
 google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
+
+# PDF Processing
+pymupdf  # Provides fitz module
+
+# Document Processing & RAG
 chromadb
-pypdf2
-pypdf
 sentence-transformers
-fitz
+
+# Utilities
+python-dotenv
