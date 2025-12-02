@@ -17,12 +17,22 @@ def start_services():
     print("="*60)
     
     print("\n[1/2] Starting MCP server on port 8000...")
+    
+    # Create a copy of environment variables
+    mcp_env = os.environ.copy()
+    
+    # Force uvicorn (used by fastmcp) to use port 8000 and bind to 0.0.0.0
+    # This overrides Render's PORT variable for the MCP process only
+    mcp_env["PORT"] = "8000"
+    mcp_env["HOST"] = "0.0.0.0"
+    
     # Start MCP server as subprocess - let it output to console
     mcp_process = subprocess.Popen(
         [sys.executable, "gemini_mcp.py"],
         # Don't capture output - let it print to console for debugging
         stdout=None,
-        stderr=None
+        stderr=None,
+        env=mcp_env  # Pass the modified environment
     )
     
     # Wait for MCP server to initialize
