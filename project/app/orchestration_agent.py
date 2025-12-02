@@ -19,24 +19,6 @@ AI_MODEL = "gemini-2.5-flash"
 
 # Load environment variables
 load_dotenv()
-
-# Configure Gemini locally for classification/routing
-API_KEY = os.getenv("GEMINI_API_KEY")
-if API_KEY:
-    genai.configure(api_key=API_KEY)
-
-async def route_to_mcp(request: str) -> str:
-    logger = get_logger()
-    logger.log_routing("MCP Server", "agent_action")
-    
-    try:
-        async with Client("http://localhost:8000/sse") as client:
-            result = await client.call_tool('agent_action', {'request': request})
-            # Improved extraction to avoid repeats
-            if hasattr(result, 'content') and isinstance(result.content, list) and len(result.content) > 0 and hasattr(result.content[0], 'text'):
-                response = result.content[0].text.replace('\\n', '\n')
-            elif hasattr(result, 'structured_content') and 'result' in result.structured_content:
-                response = result.structured_content['result'].replace('\\n', '\n')
             elif hasattr(result, 'text'):
                 response = result.text.replace('\\n', '\n')
             elif isinstance(result, str) and 'text=' in result:
@@ -57,24 +39,6 @@ async def route_to_mcp(request: str) -> str:
     except Exception as e:
         error_msg = f"MCP Error: {str(e)}"
         logger.log_error(
-            error_type="mcp_error",
-            error_message=str(e),
-            context="route_to_mcp"
-        )
-        return error_msg
-
-async def route_to_mcp_general(prompt: str) -> str:
-    logger = get_logger()
-    logger.log_routing("MCP Server", "ask_gemini")
-    
-    try:
-        async with Client("http://localhost:8000/sse") as client:
-            result = await client.call_tool('ask_gemini', {'prompt': prompt})
-            # Improved extraction to avoid repeats
-            if hasattr(result, 'content') and isinstance(result.content, list) and len(result.content) > 0 and hasattr(result.content[0], 'text'):
-                response = result.content[0].text.replace('\\n', '\n')
-            elif hasattr(result, 'structured_content') and 'result' in result.structured_content:
-                response = result.structured_content['result'].replace('\\n', '\n')
             elif hasattr(result, 'text'):
                 response = result.text.replace('\\n', '\n')
             elif isinstance(result, str) and 'text=' in result:

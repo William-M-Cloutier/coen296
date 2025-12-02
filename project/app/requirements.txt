@@ -16,7 +16,7 @@ google-auth-oauthlib
 
 # PDF Processing
 pymupdf  # Provides fitz module
-
+pypdf
 # Document Processing & RAG
 chromadb
 sentence-transformers

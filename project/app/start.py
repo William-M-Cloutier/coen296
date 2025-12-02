@@ -7,6 +7,10 @@ import sys
 import time
 import os
 
+# Set default MCP_URL if not provided
+if "MCP_URL" not in os.environ:
+    os.environ["MCP_URL"] = "http://127.0.0.1:8000/sse"
+
 def start_services():
     print("="*60)
     print("Starting Orchestration Agent Multi-Service Deployment")
