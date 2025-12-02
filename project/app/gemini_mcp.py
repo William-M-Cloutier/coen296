@@ -324,7 +324,7 @@ def ask_gemini(prompt: str) -> str:
     try:
         model = genai.GenerativeModel('gemini-2.5-flash')
 import os
-    """
+    
     try:
         return list_files(max_results=max_results, query=query)
     except Exception as e:
