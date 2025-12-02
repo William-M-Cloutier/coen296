@@ -9,4 +9,6 @@ google-auth-httplib2
 google-auth-oauthlib
 chromadb
 pypdf2
+pypdf
 sentence-transformers
+fitz
