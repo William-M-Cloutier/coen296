@@ -1,41 +1,177 @@
 import os
+import base64
+import imaplib
+import email
+from email.header import decode_header
 import google.generativeai as genai
+import resend  # Resend API for sending emails (bypasses SMTP)
+from expense_agent import validate_reimbursement
 from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
 from logging_utils import get_logger
-
-# Import Gmail API tools (Bypasses SMTP blocks)
-from gmail_agent import (
-    list_emails as list_emails_tool,
-    read_email as read_email_tool,
-    send_email as send_email_tool
-)
-
-# Import Drive agent functions
 from drive_agent import (
-    list_files as list_drive_files_tool,
-    search_files as search_drive_files_tool,
-    download_file as download_drive_file_tool,
-    upload_file as upload_drive_file_tool,
-    semantic_search as semantic_search_tool,
-    read_document as read_drive_document_tool
+    get_drive_service,
+    list_files,
+    search_files,
+    download_file,
+    upload_file,
+    semantic_search,
+    read_text_file,
+    read_document
 )
 
-# Import Expense agent function
-from expense_agent import validate_reimbursement as validate_reimbursement_tool
-
-# Load environment variables
 load_dotenv()
-
-# Initialize FastMCP server
 mcp = FastMCP("Gemini Server")
 
-# Configure Gemini
 API_KEY = os.getenv("GEMINI_API_KEY")
 if API_KEY:
     genai.configure(api_key=API_KEY)
 
-# Map of tool names to functions for execution
+# Gmail credentials for READING emails (IMAP)
+GMAIL_USER = os.getenv("GMAIL_USER")
+GMAIL_PASSWORD = os.getenv("GMAIL_PASSWORD")
+
+# Resend credentials for SENDING emails (HTTPS API)
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL")
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
+
+def list_emails_tool(max_results: int = 10, query: str = None):
+    """List recent emails from the inbox using IMAP."""
+    if not GMAIL_USER or not GMAIL_PASSWORD: 
+        return "Error: GMAIL_USER or GMAIL_PASSWORD not set."
+   
+    try:
+        mail = imaplib.IMAP4_SSL("imap.gmail.com")
+        mail.login(GMAIL_USER, GMAIL_PASSWORD)
+        mail.select("inbox")
+        status, messages = mail.search(None, "ALL")
+        if status != "OK": return "No messages found."
+       
+        email_ids = messages[0].split()
+        if not email_ids: return "No messages found."
+       
+        latest_email_ids = email_ids[-max_results:]
+       
+        output = []
+        for e_id in reversed(latest_email_ids):
+            try:
+                _, msg_data = mail.fetch(e_id, "(RFC822)")
+                for response_part in msg_data:
+                    if isinstance(response_part, tuple):
+                        msg = email.message_from_bytes(response_part[1])
+                       
+                        subject = "(no subject)"
+                        if msg["Subject"]:
+                            try:
+                                decoded = decode_header(msg["Subject"])[0]
+                                if isinstance(decoded[0], bytes):
+                                    subject = decoded[0].decode(decoded[1] if decoded[1] else "utf-8")
+                                else:
+                                    subject = decoded[0]
+                            except:
+                                subject = str(msg["Subject"])
+                       
+                        sender = msg.get("From", "(unknown)")
+                        output.append(f"ID: {e_id.decode()} | From: {sender} | Subject: {subject}")
+            except Exception as e:
+                output.append(f"ID: {e_id.decode()} | Error: Could not parse email")
+       
+        mail.logout()
+        return "\n".join(output) if output else "No emails found."
+    except Exception as e: 
+        return f"Error: {e}"
+
+def read_email_tool(message_id: str):
+    """Read full content of an email by ID using IMAP."""
+    if not GMAIL_USER or not GMAIL_PASSWORD: 
+        return "Error: GMAIL_USER or GMAIL_PASSWORD not set."
+    
+    try:
+        mail = imaplib.IMAP4_SSL("imap.gmail.com")
+        mail.login(GMAIL_USER, GMAIL_PASSWORD)
+        mail.select("inbox")
+       
+        _, msg_data = mail.fetch(message_id.encode(), "(RFC822)")
+        raw_email = msg_data[0][1]
+        msg = email.message_from_bytes(raw_email)
+       
+        body = ""
+        if msg.is_multipart():
+            for part in msg.walk():
+                if part.get_content_type() == "text/plain":
+                    body = part.get_payload(decode=True).decode()
+                    break
+        else:
+            body = msg.get_payload(decode=True).decode()
+           
+        mail.logout()
+        return f"Subject: {msg['Subject']}\nFrom: {msg['From']}\n\nBody:\n{body}"
+    except Exception as e: 
+        return f"Error: {e}"
+
+def send_email_tool(to: str, subject: str, body: str):
+    """Send an email using Resend API (HTTPS, not SMTP)."""
+    if not RESEND_API_KEY or not RESEND_FROM_EMAIL:
+        return "Error: RESEND_API_KEY or RESEND_FROM_EMAIL not set in environment variables."
+    
+    try:
+        params = {
+            "from": RESEND_FROM_EMAIL,
+            "to": [to],
+            "subject": subject,
+            "text": body
+        }
+        
+        email_response = resend.Emails.send(params)
+        return f"Email sent successfully! ID: {email_response['id']}"
+    except Exception as e:
+        return f"Error sending email via Resend: {e}"
+
+# Drive tools
+def list_drive_files_tool(max_results: int = 10, query: str = None):
+    try:
+        return list_files(max_results=max_results, query=query)
+    except Exception as e:
+        return f"Error listing Drive files: {e}"
+
+def search_drive_files_tool(search_term: str, use_semantic: bool = False):
+    try:
+        return search_files(search_term=search_term, use_semantic=use_semantic)
+    except Exception as e:
+        return f"Error searching Drive files: {e}"
+
+def download_drive_file_tool(file_id: str, destination: str = None):
+    try:
+        return download_file(file_id=file_id, destination=destination)
+    except Exception as e:
+        return f"Error downloading file: {e}"
+
+def upload_drive_file_tool(filepath: str, folder_id: str = None):
+    try:
+        return upload_file(filepath=filepath, folder_id=folder_id)
+    except Exception as e:
+        return f"Error uploading file: {e}"
+
+def semantic_search_tool(query: str, max_files: int = 10):
+    try:
+        return semantic_search(query=query, max_files=max_files)
+    except Exception as e:
+        return f"Error in content search: {e}"
+
+def read_drive_document_tool(file_id: str):
+    try:
+        return read_document(file_id=file_id)
+    except Exception as e:
+        return f"Error reading document: {e}"
+
+def validate_reimbursement_tool(receipt_path: str):
+    try:
+        return validate_reimbursement(receipt_path=receipt_path)
+    except Exception as e:
+        return f"Error validating reimbursement: {e}"
+
 tools_map = {
     'list_emails': list_emails_tool,
     'read_email': read_email_tool,
@@ -51,13 +187,10 @@ tools_map = {
 
 @mcp.tool()
 def agent_action(request: str) -> str:
-    """
-    Ask the AI Agent to perform an action.
-    """
+    """Ask the AI Agent to perform an action."""
     if not API_KEY: return "Error: GEMINI_API_KEY not set."
     logger = get_logger()
     
-    # 1. Initialize Model with Tools
     model = genai.GenerativeModel(
         model_name='gemini-2.5-flash',
         tools=[
@@ -70,14 +203,11 @@ def agent_action(request: str) -> str:
         system_instruction="You are an AI agent with access to tools. Call tools only with valid arguments as defined. For upload_drive_file_tool, require 'filepath' (local path) and optional 'folder_id'. If args are missing from request, ask for clarification instead of guessing. If the request includes 'Attached files:' followed by comma-separated file paths, treat those as the local 'filepath' arguments for upload (call the tool separately for each file if multiple). For expense reimbursement requests, use validate_reimbursement_tool with the receipt filepath from attached files (assume one file is the receipt; deny if no file)."
     )
     
-    # 2. Start Chat Session (Manual Function Calling)
     chat = model.start_chat(enable_automatic_function_calling=False)
     
     try:
-        # 3. Send initial message
         response = chat.send_message(request)
         
-        # 4. Loop to handle tool calls (max 10 turns)
         for _ in range(10):
             if not response.candidates or not response.candidates[0].content.parts:
                 break
@@ -94,14 +224,10 @@ def agent_action(request: str) -> str:
                 tool_result = "Error: Tool not found"
                 if tool_name in tools_map:
                     try:
-                        # Execute the tool
-                        # Note: If tools are FastMCP objects, they might need special handling
-                        # But usually they are callables.
                         tool_result = tools_map[tool_name](**args)
                     except Exception as e:
                         tool_result = f"Error executing {tool_name}: {str(e)}"
                 
-                # Send result back
                 response = chat.send_message(
                     {
                         "role": "function",

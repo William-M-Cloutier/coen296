@@ -21,5 +21,8 @@ pypdf
 chromadb
 sentence-transformers
 
+# Email Service (Bypasses SMTP block on Render)
+resend
+
 # Utilities
 python-dotenv

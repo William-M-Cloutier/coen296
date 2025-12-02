@@ -24,27 +24,20 @@ def get_gmail_service():
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    # The file gmail_token.json stores the user's access and refresh tokens
-    if os.path.exists('gmail_token.json'):
-        creds = Credentials.from_authorized_user_file('gmail_token.json', SCOPES)
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            # Fallback to drive_credentials.json if credentials.json is missing
-            creds_file = 'credentials.json'
-            if not os.path.exists(creds_file) and os.path.exists('drive_credentials.json'):
-                creds_file = 'drive_credentials.json'
-            
-            if not os.path.exists(creds_file):
-                raise FileNotFoundError(f"{creds_file} not found. Please download it from Google Cloud Console.")
-            
+            if not os.path.exists('credentials.json'):
+                raise FileNotFoundError("credentials.json not found. Please download it from Google Cloud Console.")
             flow = InstalledAppFlow.from_client_secrets_file(
-                creds_file, SCOPES)
+                'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('gmail_token.json', 'w') as token:
+        with open('token.json', 'w') as token:
             token.write(creds.to_json())
 
     service = build('gmail', 'v1', credentials=creds)
